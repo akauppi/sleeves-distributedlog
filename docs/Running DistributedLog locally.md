@@ -7,12 +7,15 @@ The development environment used: macOS 10.12 with HomeBrew
 ## Requirements
 
 - git
+- mvn
 
-## Clone DistributedLog
+## Clone and build DistributedLog
 
 ```
 $ git clone git@github.com:apache/incubator-distributedlog.git
 $ cd incubator-distributedlog
+$ ./scripts/change-scala-version.sh 2.11
+$ mvn clean install -DskipTests
 ```
 
 ## ZooKeeper
