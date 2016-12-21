@@ -1,24 +1,13 @@
 package sleeves.distributedlog
 
+import java.net.URL
 import java.nio.ByteBuffer
 
 import com.twitter.distributedlog.DLSN
 import com.twitter.distributedlog.service.{DistributedLogClient, DistributedLogClientBuilder}
 import com.twitter.finagle.builder.ClientBuilder
+import com.twitter.finagle.thrift.ClientId
 import com.twitter.util.FutureEventListener
-
-/*
-*/
-class DLWriteProxy {
-
-
-}
-
-object DLWriteProxy {
-
-}
-
-
 
 object SampleCode {   // from -> http://distributedlog.incubator.apache.org/docs/latest/user_guide/api/proxy.html
   import com.twitter.util.Duration
