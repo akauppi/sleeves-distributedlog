@@ -25,6 +25,20 @@ The DistributedLog access happens via Thrift, not REST API. The purpose of this 
 
 The project is in early stages. I hope to have something meaningful within a month (21-Dec-16).
 
+## Running tests
+
+```
+$ sbt test
+```
+
+These tests check the internals, and don't require a DistributedLog instance to be running.
+
+<!-- enable once we have integration tests
+
+Start up DistributedLog locally, see docs/[Running DistributedLog locally.md](docs/Running DistributedLog locally.md)
+-->
+
+
 <!-- remove
 ## Installing DL 0.4.0-SNAPSHOT locally
 

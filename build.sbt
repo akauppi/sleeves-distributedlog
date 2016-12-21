@@ -20,7 +20,7 @@ scalacOptions ++= Seq(
 
 //--- Dependencies ---
 
-val akkaVersion = "2.4.14"
+val akkaVersion = "2.4.16"
 val akkaActor = "com.typesafe.akka" %% "akka-actor" % akkaVersion
 
 val akkaHttpVersion = "10.0.0"    // 10.0.1 not found AKa121216
