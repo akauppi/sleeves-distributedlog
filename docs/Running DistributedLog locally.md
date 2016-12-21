@@ -133,16 +133,83 @@ pong
 
 ## Testing
 
-This should 
+This allows you to write data from the console to dynamiclog streams:
+
 ```
 $ ./distributedlog-tutorials/distributedlog-basic/bin/runner run com.twitter.distributedlog.basic.ConsoleProxyMultiWriter 'inet!127.0.0.1:9000' messaging-stream-1,messaging-stream-2,messaging-stream-3,messaging-stream-4,messaging-stream-5
+JMX enabled by default
+DLOG_HOME => ./distributedlog-tutorials/distributedlog-basic/bin/..
+SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
+SLF4J: Defaulting to no-operation (NOP) logger implementation
+SLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further details.
+Dec 21, 2016 5:59:30 PM com.twitter.finagle.BaseResolver$$anonfun$resolvers$1 apply
+INFO: Resolver[inet] = com.twitter.finagle.InetResolver(com.twitter.finagle.InetResolver@33d512c1)
+Dec 21, 2016 5:59:30 PM com.twitter.finagle.BaseResolver$$anonfun$resolvers$1 apply
+INFO: Resolver[fixedinet] = com.twitter.finagle.FixedInetResolver(com.twitter.finagle.FixedInetResolver@515c6049)
+Dec 21, 2016 5:59:30 PM com.twitter.finagle.BaseResolver$$anonfun$resolvers$1 apply
+INFO: Resolver[neg] = com.twitter.finagle.NegResolver$(com.twitter.finagle.NegResolver$@639c2c1d)
+Dec 21, 2016 5:59:30 PM com.twitter.finagle.BaseResolver$$anonfun$resolvers$1 apply
+INFO: Resolver[nil] = com.twitter.finagle.NilResolver$(com.twitter.finagle.NilResolver$@5fe94a96)
+Dec 21, 2016 5:59:30 PM com.twitter.finagle.BaseResolver$$anonfun$resolvers$1 apply
+INFO: Resolver[fail] = com.twitter.finagle.FailResolver$(com.twitter.finagle.FailResolver$@443118b0)
+Dec 21, 2016 5:59:30 PM com.twitter.finagle.BaseResolver$$anonfun$resolvers$1 apply
+INFO: Resolver[zk] = com.twitter.finagle.zookeeper.ZkResolver(com.twitter.finagle.zookeeper.ZkResolver@765d7657)
+Dec 21, 2016 5:59:30 PM com.twitter.finagle.BaseResolver$$anonfun$resolvers$1 apply
+INFO: Resolver[zk2] = com.twitter.finagle.serverset2.Zk2Resolver(com.twitter.finagle.serverset2.Zk2Resolver@74235045)
+Dec 21, 2016 5:59:30 PM com.twitter.finagle.Init$$anonfun$1 apply$mcV$sp
+INFO: Finagle version 6.34.0 (rev=44f444f606b10582c2da8d5770b7879ddd961211) built at 20160310-155158
+[dlog] > 1st line
+[dlog] > some more
+[dlog] > then finish 
 ```
 
+(exit with Ctrl-D)
+
+To read the streams:
+
 ```
-$ ./distributedlog-tutorials/distributedlog-basic/bin/runner run com.twitter.distributedlog.basic.MultiReader distributedlog://127.0.0.1:7000/messaging/my_namespace messaging-stream-1,messaging-stream-2,messaging-stream-3,messaging-stream-4,messaging-stream-5
+$ ./distributedlog-tutorials/distributedlog-basic/bin/runner run com.twitter.distributedlog.basic.MultiReader distributedlog://127.0.0.1:7000/messaging/abc messaging-stream-1,messaging-stream-2,messaging-stream-3,messaging-stream-4,messaging-stream-5
+JMX enabled by default
+DLOG_HOME => ./distributedlog-tutorials/distributedlog-basic/bin/..
+SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
+SLF4J: Defaulting to no-operation (NOP) logger implementation
+SLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further details.
+Opening log stream messaging-stream-1
+Opening log stream messaging-stream-2
+Opening log stream messaging-stream-3
+Opening log stream messaging-stream-4
+Opening log stream messaging-stream-5
+Log stream messaging-stream-4 is empty.
+Wait for records from messaging-stream-4 starting from DLSN{logSegmentSequenceNo=1, entryId=0, slotId=0}
+Open reader to read records from stream messaging-stream-4
+Log stream messaging-stream-2 is empty.
+Wait for records from messaging-stream-2 starting from DLSN{logSegmentSequenceNo=1, entryId=0, slotId=0}
+Open reader to read records from stream messaging-stream-2
+Wait for records from messaging-stream-5 starting from DLSN{logSegmentSequenceNo=1, entryId=0, slotId=0}
+Wait for records from messaging-stream-1 starting from DLSN{logSegmentSequenceNo=1, entryId=0, slotId=0}
+Open reader to read records from stream messaging-stream-5
+Open reader to read records from stream messaging-stream-1
+Wait for records from messaging-stream-3 starting from DLSN{logSegmentSequenceNo=1, entryId=0, slotId=0}
+Open reader to read records from stream messaging-stream-3
+Received record DLSN{logSegmentSequenceNo=1, entryId=0, slotId=0} from stream messaging-stream-1
+"""
+Received record DLSN{logSegmentSequenceNo=1, entryId=0, slotId=0} from stream messaging-stream-5
+some more
+"""
+"""
+then finish
+"""
+Received record DLSN{logSegmentSequenceNo=1, entryId=0, slotId=0} from stream messaging-stream-3
+"""
+1st line
+"""
 ```
 
-## Troubleshooting
+(ctrl-C to break out)
+
+That worked. :)
+
+## Troubleshooting with zkCli
 
 Much of DistributedLog's health etc. can be checked via ZooKeeper, aka the `zkCli` command.
 
@@ -158,7 +225,7 @@ WatchedEvent state:SyncConnected type:None path:null
 [zk: localhost:2181(CONNECTED) 0] 
 ```
 
-If you see the `CONNECTED`, ZooKeeper itself is running and you have access to it. If you see `CONNECTING`, ZooKeeper service is not up.
+If you see `CONNECTED`, ZooKeeper itself is running and you can use the prompt. If you see `CONNECTING`, ZooKeeper is not up.
 
 ```
 [zk: localhost:2181(CONNECTED) 0] ls /
