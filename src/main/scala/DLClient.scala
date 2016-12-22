@@ -1,18 +1,12 @@
 package sleeves.distributedlog
 
-import java.net.URL
 import java.nio.ByteBuffer
 
-import akka.actor.{Actor, ActorRef, ActorSystem, Props}
-import akka.stream.OverflowStrategy
-import akka.stream.actor.ActorPublisher
-import akka.stream.javadsl.SourceQueue
-import akka.stream.scaladsl.{Flow, Sink, Source, SourceQueueWithComplete}
 import com.twitter.distributedlog.DLSN
 import com.twitter.distributedlog.service.{DistributedLogClient, DistributedLogClientBuilder}
 import com.twitter.finagle.thrift.ClientId
-import com.twitter.util.{FutureEventListener, Future => TFuture}
-import org.reactivestreams.Publisher
+
+import scala.util.{Failure, Success, Try}
 
 /*
 * References:
@@ -28,6 +22,7 @@ import org.reactivestreams.Publisher
 * finagleNameStr: e.g. "inet!127.0.0.1:9000" (the IP of the write proxy)
 */
 class DLClient private (clientId: String, name: String, finagleNameStr: String) {
+  import com.twitter.util.{FutureEventListener, Future => TFuture}
 
   private
   val client: DistributedLogClient = {
@@ -39,53 +34,27 @@ class DLClient private (clientId: String, name: String, finagleNameStr: String) 
       .build()
   }
 
-  // Writing happens via a Flow - data in, DLSN information on the writes out. This should actually be
-  // rather natural concept for the caller, hopefully. :)
+  // Used by 'DLWriter'
   //
-  def flow(streamName: String): Flow[Array[Byte],DLSN,_] = {
+  // Distributionlog API specific details are handled here (such as use of 'com.twitter.util.Future' instead of normal
+  // Scala classes); Akka stream belong to 'DLWriter'.
+  //
+  private[distributedlog]
+  def write( streamName: String, data: Array[Byte], cb: Function1[Try[DLSN],Unit] ): Unit = {    // tbd. can change the return value to a (Scala) Future if needed
 
-    var sq: SourceQueueWithComplete[DLSN] = null
-
-    // The source that will get triggered once confirmation of write arrives
-    //
-    // Note: The strategy could be either 'dropHead' (forget oldest) or 'backpressure' (which does not drop anything).
-    //    We need to see if retaining order is important, or just getting a confirmation on the highest offset written
-    //    out (i.e. can we drop entries). The 'max' makes sure the largest always gets through, so that may already
-    //    drop values (if order changes in future completion). To be studied closer. AKa211216
-    //
-    // Note: It's important we return the source from '.mapMaterializedValue'. The inner block gets called
-    //    once the whole flow is materialized, but that is enough for use by the sink. Alternative to this would
-    //    be to use an actor setup of some kind. If this works, great.
-    //
-    // References:
-    //    Provide a 'Source.queue' ... (Akka GitHub Issues)
-    //      -> https://github.com/akka/akka/issues/17693
-    //    How can I use ... Source queue to the caller without materializing it?
-    //      -> http://stackoverflow.com/questions/37113877/how-can-i-use-and-return-source-queue-to-caller-without-materializing-it/37117205#37117205
-    //
-    val src: Source[DLSN,_] = Source.queue(10,OverflowStrategy.dropHead).mapMaterializedValue( (x: SourceQueueWithComplete[DLSN]) => sq = x )
-
-    // The sink that takes in the data
-    //
-    val sink: Sink[Array[Byte],_] = Sink.foreach( (data: Array[Byte]) => {
-
-      val wrFuture: TFuture[DLSN] = client.write(streamName, ByteBuffer.wrap(data))
-
-      val fel = new FutureEventListener[DLSN] {
-        override
-        def onSuccess(value: DLSN) {
-          sq.offer(value)
-        }
-        override
-        def onFailure(ex: Throwable) {
-          sq.fail(ex)
-        }
+    val fel = new FutureEventListener[DLSN] {
+      override
+      def onSuccess(value: DLSN) {
+        cb( Success(value) )
       }
+      override
+      def onFailure(ex: Throwable) {
+        cb(Failure(ex))
+      }
+    }
 
-      wrFuture.addEventListener(fel)
-    })
-
-    Flow.fromSinkAndSource(sink,src)
+    val wrTFut: TFuture[DLSN] = client.write(streamName, ByteBuffer.wrap(data))
+    wrTFut.addEventListener(fel)
   }
 
   // Note: Scala does not have class destructors. If the caller does not explicitly close the handle, it will
@@ -98,8 +67,11 @@ class DLClient private (clientId: String, name: String, finagleNameStr: String) 
 
 object DLClient {
 
-  def apply(clientId: String, host: String, port: Int): DLClient = {
-    new DLClient(clientId, clientId, s"inet!$host:$port")
+  def apply(clientId: String, nameSpace: String, host: String, port: Int): DLClient = {
+
+    // tbd. What to do with 'nameSpace'?
+
+    new DLClient(clientId, "" /*name (is optional, we could even remove it?)*/, s"inet!$host:$port")
   }
 }
 
