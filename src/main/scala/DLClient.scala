@@ -17,20 +17,20 @@ import scala.util.{Failure, Success, Try}
 /*
 * Q: What's the difference between 'clientId' and 'name'; DistributedLog sample uses same string for both?
 *
-* clientId:   (any string)
-* name:       (use same as 'clientId')
+* clientId:   (any string?) tbd. document better
+* nameSpace:  (e.g. "..." tbd. document better)
 * finagleNameStr: e.g. "inet!127.0.0.1:9000" (the IP of the write proxy)
 */
-class DLClient private (clientId: String, name: String, finagleNameStr: String) {
+class DLClient private (clientId: String, nameSpace: String, finagleNameStr: String) {
   import com.twitter.util.{FutureEventListener, Future => TFuture}
 
   private
   val client: DistributedLogClient = {
     DistributedLogClientBuilder.newBuilder()
       .clientId( ClientId(clientId) )
-      .name(name)
+      .name(nameSpace)                  // Q: is this the namespace? TBD: NOT SURE! what is it - do we need it? Where to place the namespace?
       .thriftmux(true)
-      .finagleNameStr(finagleNameStr)   // Q: What's the purpose of the Finagle name?
+      .finagleNameStr(finagleNameStr)   // carries host and port (we always use 'inet', i.e. reach for Write Proxy)
       .build()
   }
 
@@ -57,8 +57,7 @@ class DLClient private (clientId: String, name: String, finagleNameStr: String) 
     wrTFut.addEventListener(fel)
   }
 
-  // Note: Scala does not have class destructors. If the caller does not explicitly close the handle, it will
-  //    leak memory (since 'client' won't get closed).
+  // Q: How to do automatic closing of resources properly in Scala? Now, the responsibility lies on the caller.
   //
   def close(): Unit = {
     client.close()
@@ -69,37 +68,6 @@ object DLClient {
 
   def apply(clientId: String, nameSpace: String, host: String, port: Int): DLClient = {
 
-    // tbd. What to do with 'nameSpace'?
-
-    new DLClient(clientId, "" /*name (is optional, we could even remove it?)*/, s"inet!$host:$port")
+    new DLClient(clientId, nameSpace, s"inet!$host:$port")
   }
 }
-
-
-/* REMOVE
-// Helper actor for taking in 'DLSN' values and passing the latest one of them out to a stream.
-//
-// References:
-//    Pre Materialization with Actor
-//      -> http://stackoverflow.com/questions/30964824/how-to-create-a-source-that-can-receive-elements-later-via-a-method-call
-//
-private
-object DLSNPublisher {
-  def apply()(implicit as: ActorSystem): Publisher[DLSN] = {
-    val actorRef: ActorRef = as actorOf Props[Forwarder]
-    ActorPublisher[DLSN](actorRef)
-  }
-
-  private
-  class Forwarder extends Actor {
-    private
-    var largest: DLSN = null
-
-    override
-    def receive = {
-      case x: DLSN if ((largest == null) || (x.compareTo(largest) > 0)) =>    // later DLSN than before
-
-    }
-  }
-}
-*/

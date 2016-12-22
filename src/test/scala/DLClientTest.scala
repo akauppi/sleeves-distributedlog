@@ -21,7 +21,7 @@ class DLClientTest extends FlatSpec with Matchers {
   }
 
   it should s"not be createable to a non-existing namespace" in {
-    val ns = f"nosuch-${randomGen.nextInt(1000)}%04d"   // 0000..9999
+    val ns = f"nosuch-${random.nextInt(1000)}%04d"   // 0000..9999
 
     an [Int] should be thrownBy {
       val client = DLClient(clientId, ns, host, port)
@@ -33,5 +33,5 @@ class DLClientTest extends FlatSpec with Matchers {
 object DLClientTest {
   val clientId = "DLClientTest"
 
-  val randomGen = Random
+  val random = Random
 }

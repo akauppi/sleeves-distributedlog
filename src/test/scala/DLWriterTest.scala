@@ -10,6 +10,7 @@ import sleeves.distributedlog.{DLClient, DLWriter}
 
 import scala.collection.immutable
 import scala.concurrent.Future
+import scala.util.Random
 
 class DLWriterTest extends FlatSpec with Matchers with ScalaFutures with BeforeAndAfterAll {
   import DLWriterTest._
@@ -32,10 +33,10 @@ class DLWriterTest extends FlatSpec with Matchers with ScalaFutures with BeforeA
   override
   def afterAll(): Unit = {
     client.close()
+    client = null
   }
 
   it should "be possible to write to a stream (and get DLSN's back)" in {
-    val client = DLClient("sleeves-test2", namespace, host, port)
 
     val flow: Flow[Array[Byte],DLSN,_] = new DLWriter(client, streamname).flow
 
@@ -52,9 +53,16 @@ class DLWriterTest extends FlatSpec with Matchers with ScalaFutures with BeforeA
     }
   }
 
-  // tbd. Test: writing to a non-existing streamName should fail
+  it should "not be possible to write to a stream that does not exist" ignore /*in*/ {
+    val stream: String = f"nosuch-${random.nextInt(1000)}%04d"
+
+    a [Nothing] should be thrownBy {    // tbd.
+      val writer = new DLWriter(client, stream)
+    }
+  }
 }
 
 object DLWriterTest {
   val clientId = "DLWriterTest"
+  val random = Random
 }
