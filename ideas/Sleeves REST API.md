@@ -129,6 +129,11 @@ in: (nothing)
 out: author, timestamp, log name
 
 
+### Changing retention time (or size)
+
+Retention time (or size) changes can be regarded as admin things, at least in the beginning.
+
+
 ### Using as (compacted) key/value store
 
 Kafka has a "compaction" mode that allows entries in the queue that get later overwritten (based on their key value) to be skipped, thus allowing the queue to be seen as a key/value store.
