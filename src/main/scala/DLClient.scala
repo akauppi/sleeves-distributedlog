@@ -15,20 +15,18 @@ import scala.util.{Failure, Success, Try}
 */
 
 /*
-* Q: What's the difference between 'clientId' and 'name'; DistributedLog sample uses same string for both?
-*
-* clientId:   (any string?) tbd. document better
-* nameSpace:  (e.g. "..." tbd. document better)
+* clientId:   (any string?)       "identifier used by finagle-thrift to identify 'who' is sending the request." (Sijie, on mailing list 22-Dec-16)
 * finagleNameStr: e.g. "inet!127.0.0.1:9000" (the IP of the write proxy)
 */
-class DLClient private (clientId: String, nameSpace: String, finagleNameStr: String) {
+class DLClient private (clientId: String, finagleNameStr: String) {
   import com.twitter.util.{FutureEventListener, Future => TFuture}
 
   private
   val client: DistributedLogClient = {
     DistributedLogClientBuilder.newBuilder()
       .clientId( ClientId(clientId) )
-      .name(nameSpace)                  // Q: is this the namespace? TBD: NOT SURE! what is it - do we need it? Where to place the namespace?
+      // tbd. once tests pass, try not giving the name (it is optional, should not affect)
+      .name(clientId)                   // Sijie: "Usually they (name and client ID) are the same"
       .thriftmux(true)
       .finagleNameStr(finagleNameStr)   // carries host and port (we always use 'inet', i.e. reach for Write Proxy)
       .build()

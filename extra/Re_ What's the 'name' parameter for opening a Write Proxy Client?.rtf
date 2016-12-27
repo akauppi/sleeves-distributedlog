@@ -1,0 +1,83 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1504\cocoasubrtf760
+{\fonttbl\f0\fnil\fcharset0 HelveticaNeue;\f1\fswiss\fcharset0 Helvetica;\f2\fnil\fcharset0 Menlo-Regular;
+}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;\red0\green0\blue0;\red69\green60\blue204;
+}
+{\*\expandedcolortbl;;\csgray\c0;\cssrgb\c0\c0\c0;\cssrgb\c34510\c33725\c83922;
+}
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf2 From: Sijie Guo <sijie@apache.org>\
+Subject: Re: What's the 'name' parameter for opening a Write Proxy Client?\
+Date: 22 December 2016 at 21.29.36 GMT+2\
+To: dev@distributedlog.incubator.apache.org\
+Reply-To: dev@distributedlog.incubator.apache.org\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f1 \cf2 \
+\pard\pardeftab720\sl260\partightenfactor0
+
+\f2\fs22 \cf3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec3 Re "client id and name"\
+\
+Client Id is the identifier used by finagle-thrift to identify "who" is\
+sending the request. The client id can then be used by the thrift proxy\
+server to reject unknown clients optionally. (\
+http://www.rubydoc.info/gems/finagle-thrift/1.4.1/FinagleThrift/ClientId)\
+\
+The name is used by the client side for labeling the clients. The name is\
+typically used for scoping metrics. If you have two clients labelled by\
+different names, their client-side metrics will be scoped under different\
+names.\
+\
+Usually they are same.\
+\
+Re "namespace"\
+\
+When setting up a cluster of proxy servers, you need to specify a namespace\
+that the proxy servers want to serve. So when you talk to the cluster of\
+proxy servers, you implicitly point to the namespace that the proxy servers\
+are serving.\
+\
+You can have a few ways to access the cluster of proxy servers.\
+\
+- you can use the finagle 'Name' (\
+http://twitter.github.io/finagle/guide/Names.html) to access the cluster.\
+For example, if all your proxy servers are behind a DNS, you can use\
+"inet!<dns>:port" to access the cluster.\
+- besides that, all the proxy servers will be announcing themselves under\
+'.write_proxy' of its provided namespace. You can use serverset (\
+http://stevenskelton.ca/finagle-serverset-clusters-using-zookeeper/) to\
+access the cluster.\
+- additionally, you can configure #uri(...) in the builder to point the\
+cluster that serves the namespace. (This method is only available in latest\
+master so far. It will be available after we release 0.4.0-incubating.)\
+\
+Let me know if you have any more questions.\
+\
+- Sijie\
+\
+On Thu, Dec 22, 2016 at 6:19 AM, Asko Kauppi <asko.kauppi@zalando.fi> wrote:\
+\
+\pard\pardeftab720\sl260\partightenfactor0
+\cf4 \strokec4 In http://distributedlog.incubator.apache.org/docs/\
+latest/tutorials/basic-2.html <http://distributedlog.\
+incubator.apache.org/docs/latest/tutorials/basic-2.html>\
+\
+DistributedLogClientBuilder builder = DistributedLogClientBuilder.\
+newBuilder();\
+\'a0\'a0\'a0\'a0\'a0\'a0\'a0.clientId(ClientId.apply("console-proxy-writer"))\
+\'a0\'a0\'a0\'a0\'a0\'a0\'a0.name("console-proxy-writer\'94);\
+\
+What\'92s the role of the client id (is it only for logging/debugging)?\
+\
+What\'92s the role of the name? How is it different from client id?\
+\
+Where do I provide the DistributedLog namespace that I wish to write to?\
+\
+\
+Asko Kauppi\
+Zalando Tech Helsinki\
+\
+\
+}
